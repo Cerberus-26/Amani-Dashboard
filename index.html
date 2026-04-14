@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMANI Glamping — Investor Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--dk:#1B4332;--md:#2D6A4F;--lt:#52B788;--xl:#95D5B2;--bg:#D8F3DC;
+--gold:#F4A261;--red:#E76F51;--white:#fff;
+}
+body{
+font-family:'DM Sans',sans-serif;
+background:linear-gradient(160deg,#f0f7f4 0%,#e8f0eb 30%,#f5f0e8 70%,#f7f5f0 100%);
+color:var(--dk);min-height:100vh;
+}
+.header{
+background:linear-gradient(135deg,#1B4332 0%,#2D6A4F 60%,#40916C 100%);
+padding:28px 32px 20px;color:#fff;
+}
+.header-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;max-width:1100px;margin:0 auto}
+.header h1{font-family:'DM Serif Display',Georgia,serif;font-size:28px;letter-spacing:-0.5px}
+.header .sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-bottom:4px;font-weight:600}
+.header .loc{font-size:12px;opacity:.55;margin-top:2px}
+.tabs{display:flex;gap:6px;background:rgba(255,255,255,.1);border-radius:14px;padding:4px}
+.tabs button{
+padding:8px 16px;border-radius:10px;border:none;cursor:pointer;
+font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;
+background:transparent;color:rgba(255,255,255,.7);transition:.25s;
+display:flex;align-items:center;gap:5px;
+}
+.tabs button.active{background:rgba(255,255,255,.95);color:var(--dk)}
+.tabs button:hover:not(.active){background:rgba(255,255,255,.15)}
+.main{padding:24px 32px;max-width:1100px;margin:0 auto}
+.tab-content{display:none}.tab-content.active{display:block}
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-auto{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.kpi{
+border-radius:16px;padding:20px 22px;min-width:0;
+background:rgba(255,255,255,.6);backdrop-filter:blur(12px);
+border:1px solid rgba(45,106,79,.12);
+}
+.kpi.accent{
+background:linear-gradient(135deg,#1B4332,#2D6A4F);border:none;
+}
+.kpi-label{font-size:12px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--lt);margin-bottom:6px}
+.kpi.accent .kpi-label{color:rgba(255,255,255,.65)}
+.kpi-value{font-size:26px;font-weight:700;color:var(--dk);line-height:1.1;font-family:'DM Serif Display',Georgia,serif}
+.kpi.accent .kpi-value{color:#fff}
+.kpi-sub{font-size:11px;color:var(--xl);margin-top:4px;font-weight:500}
+.kpi.accent .kpi-sub{color:rgba(255,255,255,.5)}
+.card{
+background:rgba(255,255,255,.7);backdrop-filter:blur(16px);
+border-radius:20px;padding:24px 26px;
+border:1px solid rgba(45,106,79,.08);
+box-shadow:0 2px 20px rgba(27,67,50,.04);
+}
+.card-title{font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--md);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{border-bottom:2px solid var(--md)}
+th{padding:8px 10px;color:var(--md);font-weight:700}
+td{padding:8px 10px;border-bottom:1px solid rgba(0,0,0,.04)}
+.mono{font-family:'DM Mono',monospace}
+.right{text-align:right}
+.left{text-align:left}
+.pill{padding:2px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block}
+.pill-green{background:rgba(45,106,79,.1);color:var(--md)}
+.pill-orange{background:rgba(244,162,97,.1);color:var(--red)}
+.bar-track{height:8px;border-radius:4px;background:#f0f0f0;overflow:hidden;flex:1}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#2D6A4F,#52B788);transition:width .6s}
+.signal{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;margin-bottom:6px}
+.signal-pos{background:rgba(45,106,79,.06)}
+.signal-warn{background:rgba(244,162,97,.08)}
+.signal-info{background:rgba(100,100,200,.06)}
+.signal span:last-child{font-size:12.5px;font-weight:500;color:#333}
+.check-row{
+display:flex;align-items:center;gap:10px;padding:9px 12px;
+border-radius:10px;cursor:pointer;transition:.2s;
+}
+.check-row:hover{background:rgba(45,106,79,.03)}
+.check-row.checked{background:rgba(45,106,79,.06)}
+.checkbox{
+width:22px;height:22px;border-radius:6px;flex-shrink:0;
+display:flex;align-items:center;justify-content:center;
+border:2px solid #ccc;color:#fff;font-size:13px;font-weight:700;
+transition:.2s;cursor:pointer;
+}
+.checkbox.on{background:var(--md);border-color:var(--md)}
+.check-label{font-size:12.5px;color:#666;flex:1}
+.check-row.checked .check-label{color:var(--dk);font-weight:600}
+.freq-pill{
+font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:20px;
+}
+.freq-m{background:rgba(45,106,79,.1);color:var(--md)}
+.freq-t{background:rgba(244,162,97,.1);color:var(--red)}
+.freq-o{background:rgba(100,100,200,.08);color:#555}
+.gas-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.gas-label{font-size:11.5px;color:#555;width:85px;flex-shrink:0}
+.gas-bar{flex:1;height:14px;background:#f5f5f5;border-radius:7px;overflow:hidden}
+.gas-fill{height:100%;border-radius:7px;transition:width .5s}
+.gas-val{font-size:11px;font-weight:600;color:var(--dk);width:75px;text-align:right;font-family:'DM Mono',monospace}
+.chart-wrap{position:relative;height:240px;margin-top:8px}
+.footer{text-align:center;padding:16px 0 24px;font-size:11px;color:#aaa}
+@media(max-width:768px){
+.grid-2{grid-template-columns:1fr}
+.header-inner{flex-direction:column;align-items:flex-start}
+.tabs{flex-wrap:wrap}
+.main{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="header-inner">
+<div>
+<div class="sub">Investor Dashboard</div>
+<h1>AMANI Glamping</h1>
+<div class="loc">Los Ángeles, San Rafael de Heredia • Dic 2025 — Mar 2026</div>
+</div>
+<div class="tabs" id="tabs">
+<button class="active" data-tab="overview"><span>◈</span> Resumen</button>
+<button data-tab="pnl"><span>◧</span> P&L</button>
+<button data-tab="ocupacion"><span>◉</span> Ocupación</button>
+<button data-tab="derechos"><span>◫</span> Derechos</button>
+<button data-tab="checklist"><span>◩</span> Checklist</button>
+</div>
+</div>
+</div>
+
+<div class="main">
+
+<!-- ==================== RESUMEN ==================== -->
+<div class="tab-content active" id="overview">
+<div class="grid grid-auto" style="margin-bottom:20px">
+<div class="kpi accent"><div class="kpi-label">Mi inversión</div><div class="kpi-value">₡25,200,000</div><div class="kpi-sub">$49,900.74</div></div>
+<div class="kpi accent"><div class="kpi-label">Participación</div><div class="kpi-value">90.0%</div><div class="kpi-sub">9 de 10</div></div>
+<div class="kpi"><div class="kpi-label">Utilidad acumulada</div><div class="kpi-value">$2,765.88</div><div class="kpi-sub">Margen 48.5%</div></div>
+<div class="kpi"><div class="kpi-label">Mi retorno</div><div class="kpi-value">$2,489.29</div><div class="kpi-sub">ROI: 4.99%</div></div>
+<div class="kpi"><div class="kpi-label">Noches vendidas</div><div class="kpi-value">25</div><div class="kpi-sub">Tarifa prom: $228</div></div>
+<div class="kpi"><div class="kpi-label">Ocupación prom.</div><div class="kpi-value">20.8%</div><div class="kpi-sub">4 meses de operación</div></div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:20px">
+<div class="card"><div class="card-title">Ingresos vs Gastos ($)</div><div class="chart-wrap"><canvas id="chartBar"></canvas></div></div>
+<div class="card"><div class="card-title">Mi retorno mensual ($)</div><div class="chart-wrap"><canvas id="chartLine"></canvas></div></div>
+</div>
+
+<div class="grid grid-2">
+<div class="card">
+<div class="card-title">Evolución mensual</div>
+<div id="evolucion"></div>
+</div>
+<div class="card">
+<div class="card-title">Señales del proyecto</div>
+<div class="signal signal-pos"><span>✅</span><span>Ingresos +132% en 4 meses</span></div>
+<div class="signal signal-pos"><span>✅</span><span>Rentable desde mes 1</span></div>
+<div class="signal signal-pos"><span>✅</span><span>Ocupación 6% → 37%</span></div>
+<div class="signal signal-warn"><span>⚠️</span><span>Canal único: WhatsApp</span></div>
+<div class="signal signal-warn"><span>⚠️</span><span>Solo 4 meses de data</span></div>
+<div class="signal signal-warn"><span>⚠️</span><span>Sin Airbnb/Booking</span></div>
+<div class="signal signal-info"><span>💡</span><span>Opción de +2 partic.: evaluar en Jun</span></div>
+</div>
+</div>
+</div>
+
+<!-- ==================== P&L ==================== -->
+<div class="tab-content" id="pnl">
+<div class="grid grid-auto" style="margin-bottom:20px">
+<div class="kpi accent"><div class="kpi-label">Ingresos totales</div><div class="kpi-value">$5,702.50</div></div>
+<div class="kpi"><div class="kpi-label">Gastos totales</div><div class="kpi-value">$2,936.62</div></div>
+<div class="kpi"><div class="kpi-label">Utilidad neta</div><div class="kpi-value">$2,765.88</div></div>
+<div class="kpi"><div class="kpi-label">Margen neto</div><div class="kpi-value">48.5%</div></div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:20px">
+<div class="card"><div class="card-title">Desglose de ingresos ($)</div><div class="chart-wrap"><canvas id="chartPieIng"></canvas></div></div>
+<div class="card">
+<div class="card-title">Desglose de gastos (₡)</div>
+<div id="gastosBreakdown"></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">P&L mensual detallado</div>
+<table>
+<thead><tr>
+<th class="left">Concepto</th><th class="right">Dic 2025</th><th class="right">Ene 2026</th><th class="right">Feb 2026</th><th class="right">Mar 2026</th><th class="right" style="color:var(--dk);font-weight:800">TOTAL</th>
+</tr></thead>
+<tbody id="pnlTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- ==================== OCUPACIÓN ==================== -->
+<div class="tab-content" id="ocupacion">
+<div class="grid grid-auto" style="margin-bottom:20px">
+<div class="kpi accent"><div class="kpi-label">Noches vendidas</div><div class="kpi-value">25</div><div class="kpi-sub">en 4 meses</div></div>
+<div class="kpi"><div class="kpi-label">Ocupación promedio</div><div class="kpi-value">20.8%</div></div>
+<div class="kpi"><div class="kpi-label">Tarifa promedio</div><div class="kpi-value">$228</div></div>
+<div class="kpi"><div class="kpi-label">Reservas totales</div><div class="kpi-value">20</div></div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:20px">
+<div class="card"><div class="card-title">Ocupación mensual (%)</div><div class="chart-wrap"><canvas id="chartOcc"></canvas></div></div>
+<div class="card">
+<div class="card-title">Canales de reserva</div>
+<div class="chart-wrap"><canvas id="chartCanales"></canvas></div>
+<div style="text-align:center;font-size:11px;color:var(--gold);font-weight:600;margin-top:4px">⚠️ 100% WhatsApp — diversificar canales</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Detalle por mes</div>
+<table>
+<thead><tr><th class="left">Mes</th><th class="right">Noches</th><th class="right">Ocupación</th><th class="right">Reservas</th><th class="right">Tarifa prom.</th><th class="right">RevPAR</th></tr></thead>
+<tbody id="occTable"></tbody>
+</table>
+</div>
+</div>
+
+<!-- ==================== DERECHOS ==================== -->
+<div class="tab-content" id="derechos">
+<div class="grid grid-auto" style="margin-bottom:20px">
+<div class="kpi accent"><div class="kpi-label">Derechos verificados</div><div class="kpi-value" id="derechosCount">2 / 12</div><div class="kpi-sub">Click para marcar</div></div>
+<div class="kpi"><div class="kpi-label">Documentos en posesión</div><div class="kpi-value" id="docsCount">0 / 8</div><div class="kpi-sub">Click para marcar</div></div>
+</div>
+<div class="grid grid-2">
+<div class="card"><div class="card-title">Mis 12 derechos como inversor</div><div id="derechosList"></div></div>
+<div class="card"><div class="card-title">Documentos legales</div><div id="docsList"></div></div>
+</div>
+</div>
+
+<!-- ==================== CHECKLIST ==================== -->
+<div class="tab-content" id="checklist">
+<div class="kpi accent" style="margin-bottom:20px"><div class="kpi-label">Tareas completadas</div><div class="kpi-value" id="checkCount">0 / 8</div><div class="kpi-sub">Click para marcar</div></div>
+<div class="card"><div class="card-title">Checklist del inversor inteligente</div><div id="checklistItems"></div></div>
+</div>
+
+</div>
+
+<div class="footer">AMANI Glamping — Investor Tracker • Datos reales Dic 2025 – Mar 2026 • Socio Mayoritario (9 participaciones)</div>
+
+<script>
+// DATA
+const monthly=[
+{mes:"Dic 2025",ingresos:900,gastos:458.36,utilidad:441.64,noches:2,ocupacion:6.7,reservas:1,valorPart:4.42,margen:49.1},
+{mes:"Ene 2026",ingresos:725,gastos:406.53,utilidad:318.47,noches:2,ocupacion:6.5,reservas:2,valorPart:3.18,margen:43.9},
+{mes:"Feb 2026",ingresos:1992.5,gastos:1088.93,utilidad:903.57,noches:10,ocupacion:33.3,reservas:7,valorPart:9.04,margen:45.4},
+{mes:"Mar 2026",ingresos:2085,gastos:982.80,utilidad:1102.20,noches:11,ocupacion:36.7,reservas:10,valorPart:11.02,margen:52.9},
+];
+const gastosBreakdown=[
+{name:"Limpieza",value:179000,color:"#1B4332"},{name:"Servicios",value:323290,color:"#2D6A4F"},
+{name:"Jardinería",value:140000,color:"#40916C"},{name:"Admin",value:49000,color:"#52B788"},
+{name:"Marketing",value:140100,color:"#74C69D"},{name:"Decoraciones",value:77800,color:"#95D5B2"},
+{name:"Lavandería",value:86480,color:"#B7E4C7"},{name:"Otros",value:352000,color:"#D8F3DC"},
+];
+const derechosData=[
+{d:"Reportes financieros mensuales",on:false},{d:"Acceso a cuentas bancarias",on:false},
+{d:"Distribución proporcional utilidades",on:false},{d:"Voto en decisiones mayores (>$500)",on:false},
+{d:"Preferencia nuevas participaciones",on:true},{d:"Auditoría independiente",on:false},
+{d:"Aprobar presupuesto anual",on:false},{d:"Protección anti-dilución",on:false},
+{d:"Derecho de salida (buyback)",on:false},{d:"Uso personal del glamping",on:false},
+{d:"Propiedad intelectual / marca",on:true},{d:"Info previa gastos extraordinarios",on:false},
+];
+const docsData=[
+{d:"Pacto de socios",on:false},{d:"Patente municipal",on:false},{d:"Permiso sanitario",on:false},
+{d:"Seguro propiedad INS",on:false},{d:"Inscripción tributaria",on:false},
+{d:"Comprobantes 8 aportes",on:false},{d:"Declaración ICT turismo",on:false},{d:"Avalúo propiedad",on:false},
+];
+const checkData=[
+{item:"Revisar P&L mensual",freq:"Mensual",done:false},
+{item:"Verificar ocupación vs meta",freq:"Mensual",done:false},
+{item:"Revisar gastos no autorizados",freq:"Mensual",done:false},
+{item:"Comparar tarifas vs competencia",freq:"Trimestral",done:false},
+{item:"Verificar seguros vigentes",freq:"Semestral",done:false},
+{item:"Reunión de socios",freq:"Trimestral",done:false},
+{item:"Evaluar ejercer opción 2 partic.",freq:"Según data",done:false},
+{item:"Solicitar EEFF formales",freq:"Anual",done:false},
+];
+
+const fmt=(n,d=0)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fU=(n,d=0)=>'$'+fmt(n,d);
+const fP=(n)=>fmt(n,1)+'%';
+const fC=(n)=>'₡'+fmt(n);
+
+// TABS
+document.querySelectorAll('#tabs button').forEach(btn=>{
+btn.addEventListener('click',()=>{
+document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+document.getElementById(btn.dataset.tab).classList.add('active');
+});
+});
+
+// EVOLUTION BARS
+const evDiv=document.getElementById('evolucion');
+monthly.forEach(m=>{
+const pct=(m.ingresos/2200*100);
+evDiv.innerHTML+=`<div style="display:grid;grid-template-columns:80px 1fr 90px 70px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.04);gap:10px">
+<span style="font-size:12px;font-weight:600;color:#2D6A4F">${m.mes.split(' ')[0]}</span>
+<div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+<span class="mono right" style="font-size:13px;font-weight:700;color:#1B4332">${fU(m.ingresos)}</span>
+<span style="font-size:11px;font-weight:600;text-align:right;color:${m.margen>45?'#2D6A4F':'#F4A261'}">${fP(m.margen)}</span>
+</div>`;
+});
+
+// P&L TABLE
+const pnlRows=[
+{label:"Ingresos",vals:monthly.map(m=>m.ingresos),bold:true,bg:"rgba(45,106,79,.04)"},
+{label:"Gastos",vals:monthly.map(m=>m.gastos),bold:true,bg:"rgba(244,162,97,.04)"},
+{label:"Utilidad neta",vals:monthly.map(m=>m.utilidad),bold:true,bg:"rgba(45,106,79,.1)"},
+{label:"Margen (%)",vals:monthly.map(m=>m.margen),pct:true},
+{label:"$/Participación",vals:monthly.map(m=>m.valorPart)},
+{label:"Mi retorno (9x)",vals:monthly.map(m=>m.valorPart*9),bold:true,bg:"rgba(45,106,79,.1)"},
+];
+const pnlTb=document.getElementById('pnlTable');
+pnlRows.forEach(row=>{
+const total=row.pct?row.vals.reduce((s,x)=>s+x,0)/row.vals.length:row.vals.reduce((s,x)=>s+x,0);
+let html=`<tr style="background:${row.bg||'transparent'}"><td class="left" style="font-weight:${row.bold?700:400}">${row.label}</td>`;
+row.vals.forEach(v=>{html+=`<td class="right mono" style="font-weight:${row.bold?700:400}">${row.pct?fP(v):fU(v,2)}</td>`;});
+html+=`<td class="right mono" style="font-weight:800">${row.pct?fP(total):fU(total,2)}</td></tr>`;
+pnlTb.innerHTML+=html;
+});
+
+// GASTOS BREAKDOWN
+const gasDiv=document.getElementById('gastosBreakdown');
+const gasTotal=gastosBreakdown.reduce((s,x)=>s+x.value,0);
+gastosBreakdown.forEach(g=>{
+gasDiv.innerHTML+=`<div class="gas-row">
+<span class="gas-label">${g.name}</span>
+<div class="gas-bar"><div class="gas-fill" style="width:${g.value/gasTotal*100}%;background:${g.color}"></div></div>
+<span class="gas-val">${fC(g.value)}</span>
+</div>`;
+});
+
+// OCC TABLE
+const occTb=document.getElementById('occTable');
+monthly.forEach(m=>{
+const tarifa=m.noches>0?m.ingresos/m.noches:0;
+const revpar=tarifa*(m.ocupacion/100);
+const pillClass=m.ocupacion>30?'pill-green':'pill-orange';
+occTb.innerHTML+=`<tr>
+<td class="left" style="font-weight:600">${m.mes}</td>
+<td class="right mono">${m.noches}</td>
+<td class="right"><span class="pill ${pillClass}">${fP(m.ocupacion)}</span></td>
+<td class="right mono">${m.reservas}</td>
+<td class="right mono">${fU(tarifa)}</td>
+<td class="right mono">${fU(revpar)}</td>
+</tr>`;
+});
+
+// CHECKLIST RENDERING
+function renderChecklist(data,containerId,counterId,labelKey='item'){
+const c=document.getElementById(containerId);
+const render=()=>{
+c.innerHTML='';
+data.forEach((item,i)=>{
+const isOn=item.done!==undefined?item.done:item.on;
+const label=item[labelKey]||item.d;
+const div=document.createElement('div');
+div.className='check-row'+(isOn?' checked':'');
+div.innerHTML=`<div class="checkbox${isOn?' on':''}">${isOn?'✓':''}</div>
+<span class="check-label">${label}</span>
+${item.freq?`<span class="freq-pill ${item.freq==='Mensual'?'freq-m':item.freq==='Trimestral'?'freq-t':'freq-o'}">${item.freq}</span>`:''}`;
+div.addEventListener('click',()=>{
+if(item.done!==undefined)item.done=!item.done;else item.on=!item.on;
+render();
+});
+c.appendChild(div);
+});
+if(counterId){
+const count=data.filter(x=>(x.done!==undefined?x.done:x.on)).length;
+document.getElementById(counterId).textContent=`${count} / ${data.length}`;
+}
+};
+render();
+}
+
+renderChecklist(derechosData,'derechosList','derechosCount','d');
+renderChecklist(docsData,'docsList','docsCount','d');
+renderChecklist(checkData,'checklistItems','checkCount','item');
+
+// CHARTS
+const labels=monthly.map(m=>m.mes.split(' ')[0]);
+const chartOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:'DM Sans',size:11}}}}};
+
+// Bar chart
+new Chart(document.getElementById('chartBar'),{
+type:'bar',data:{labels,datasets:[
+{label:'Ingresos',data:monthly.map(m=>m.ingresos),backgroundColor:'#2D6A4F',borderRadius:6},
+{label:'Gastos',data:monthly.map(m=>m.gastos),backgroundColor:'#95D5B2',borderRadius:6},
+]},options:{...chartOpts,scales:{y:{ticks:{callback:v=>'$'+v,font:{family:'DM Sans',size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{family:'DM Sans',size:11}},grid:{display:false}}}}
+});
+
+// Line chart - retorno
+new Chart(document.getElementById('chartLine'),{
+type:'line',data:{labels,datasets:[{
+label:'Mi retorno (9x)',data:monthly.map(m=>m.valorPart*9),
+borderColor:'#2D6A4F',backgroundColor:'rgba(45,106,79,.1)',fill:true,
+tension:.3,borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#2D6A4F',
+}]},options:{...chartOpts,scales:{y:{ticks:{callback:v=>'$'+v,font:{family:'DM Sans',size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{family:'DM Sans',size:11}},grid:{display:false}}}}
+});
+
+// Pie ingresos
+new Chart(document.getElementById('chartPieIng'),{
+type:'doughnut',data:{
+labels:['Hospedaje','Adicionales','Talleres','Cenas'],
+datasets:[{data:[4697.5,285,400,320],backgroundColor:['#2D6A4F','#40916C','#52B788','#74C69D'],borderWidth:2,borderColor:'#fff'}]
+},options:{...chartOpts,cutout:'55%',plugins:{legend:{position:'bottom',labels:{font:{family:'DM Sans',size:11},padding:12}}}}
+});
+
+// Occ area
+new Chart(document.getElementById('chartOcc'),{
+type:'line',data:{labels,datasets:[{
+label:'Ocupación %',data:monthly.map(m=>m.ocupacion),
+borderColor:'#2D6A4F',backgroundColor:'rgba(82,183,136,.2)',fill:true,
+tension:.3,borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#2D6A4F',
+}]},options:{...chartOpts,scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{family:'DM Sans',size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{family:'DM Sans',size:11}},grid:{display:false}}}}
+});
+
+// Canales pie
+new Chart(document.getElementById('chartCanales'),{
+type:'doughnut',data:{
+labels:['WhatsApp','Eventos'],
+datasets:[{data:[20,4],backgroundColor:['#2D6A4F','#52B788'],borderWidth:2,borderColor:'#fff'}]
+},options:{...chartOpts,cutout:'50%',plugins:{legend:{position:'bottom',labels:{font:{family:'DM Sans',size:11},padding:12}}}}
+});
+</script>
+</body>
+</html>
